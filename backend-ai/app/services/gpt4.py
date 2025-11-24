@@ -2,107 +2,98 @@
 Azure OpenAI GPT-4 Service
 Handles crop diagnosis and organic solution recommendations
 """
-import os
-import json
-from openai import AzureOpenAI
+
+import requests
+from typing import List
+from app.config import settings
 
 
-class GPT4Service:
-    def __init__(self):
-        self.client = AzureOpenAI(
-            api_key=os.getenv("AZURE_OPENAI_KEY"),
-            api_version="2023-12-01-preview",
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
-        )
-        self.model = os.getenv("AZURE_OPENAI_MODEL", "gpt-4")
+async def get_agronomist_advice(tags: List[str], user_query: str, language: str) -> str:
+    """
+    Get agronomist advice using Azure OpenAI GPT-4.
     
-    async def diagnose_crop(self, image_tags: list, user_question: str) -> dict:
-        """
-        Use GPT-4 to diagnose crop health and recommend organic solutions.
-        
-        Args:
-            image_tags: List of tags detected in the image
-            user_question: User's question about the crop
-        
-        Returns:
-            dict with diagnosis, disease_name, severity, and organic_solutions
-        """
-        try:
-            system_prompt = """You are an expert organic agronomist with 20+ years of experience in sustainable farming.
-Your role is to:
-1. Analyze crop health conditions from image descriptions
-2. Identify diseases, pests, or nutrient deficiencies
-3. Provide organic, sustainable treatment solutions
-4. Suggest preventive measures
-
-Always respond in JSON format with the following structure:
-{
-    "disease_name": "name of identified disease",
-    "severity": "low/medium/high",
-    "confidence": 0-1,
-    "diagnosis": "detailed diagnosis",
-    "organic_solutions": ["solution1", "solution2", "solution3"],
-    "prevention": ["prevention1", "prevention2"],
-    "estimated_recovery_days": number,
-    "recommended_practices": ["practice1", "practice2"]
-}"""
-
-            user_message = f"""
-Image analysis tags: {', '.join(image_tags)}
-
-Farmer's question: {user_question}
-
-Please diagnose the crop condition and provide organic treatment recommendations."""
-
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
-                ],
-                temperature=0.7,
-                max_tokens=1000
-            )
-            
-            # Extract JSON from response
-            content = response.choices[0].message.content
-            diagnosis = json.loads(content)
-            
-            return diagnosis
-        
-        except json.JSONDecodeError:
-            raise Exception("Failed to parse GPT-4 response as JSON")
-        except Exception as e:
-            raise Exception(f"GPT-4 API Error: {str(e)}")
+    Args:
+        tags: List of detected image tags
+        user_query: User's question about the crop
+        language: Target language code (e.g., 'en', 'sw', 'ar')
     
-    async def generate_treatment_plan(self, diagnosis: dict) -> dict:
-        """
-        Generate a detailed treatment plan based on diagnosis.
-        """
-        try:
-            prompt = f"""Based on this diagnosis: {json.dumps(diagnosis)}
-            
-Generate a week-by-week treatment plan in JSON format:
-{{
-    "week_1": "actions",
-    "week_2": "actions",
-    "week_3": "actions",
-    "week_4": "actions",
-    "monitoring_tips": ["tip1", "tip2"],
-    "success_indicators": ["indicator1", "indicator2"]
-}}"""
+    Returns:
+        Advice text in the specified language (under 100 words)
+    """
+    if not settings.AZURE_OPENAI_KEY or not settings.AZURE_OPENAI_ENDPOINT:
+        raise ValueError("Azure OpenAI credentials not configured")
+    
+    url = f"{settings.AZURE_OPENAI_ENDPOINT}/openai/deployments/{settings.AZURE_OPENAI_DEPLOYMENT}/chat/completions"
+    
+    headers = {
+        "api-key": settings.AZURE_OPENAI_KEY,
+        "Content-Type": "application/json"
+    }
+    
+    params = {
+        "api-version": settings.AZURE_OPENAI_API_VERSION
+    }
+    
+    system_prompt = """You are AgriVoice, an expert agronomist specializing in organic farming for African smallholder farmers.
 
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                max_tokens=800
-            )
-            
-            treatment_plan = json.loads(response.choices[0].message.content)
-            return treatment_plan
+YOUR ROLE:
+- Diagnose crop diseases and pest problems from visual symptoms
+- Provide ONLY affordable, organic/natural solutions accessible to small farmers
+- Give actionable, immediate steps farmers can take TODAY
+- Be encouraging and supportive - farmers are your partners, not clients
+
+DIAGNOSIS APPROACH:
+1. Identify the likely disease/pest from visual clues (tags)
+2. Assess severity (mild/moderate/severe)
+3. Provide 2-3 immediate actions
+4. Suggest prevention for next season
+
+REMEDIES (Approved organic solutions):
+- Neem oil spray (pest control)
+- Ash/lime dusting (fungal diseases)
+- Compost/manure (soil health)
+- Companion planting (pest prevention)
+- Hand-picking (for larger pests)
+- Water management (prevent fungal issues)
+- Plant spacing (improve airflow)
+- Crop rotation (disease prevention)
+
+TONE:
+- Friendly and encouraging
+- Use simple, direct language
+- Show understanding of farmer constraints (budget, access)
+- Suggest low-cost alternatives
+
+CONSTRAINTS:
+- NEVER recommend synthetic chemicals or expensive treatments
+- Keep response under 100 words
+- Be specific about quantities and timing
+- Include timeline for expected improvement"""
+    
+    user_message = f"""VISUAL SYMPTOMS DETECTED: {', '.join(tags)}
+
+FARMER'S CONCERN: {user_query}
+
+Based on these visual indicators, provide a diagnosis with specific organic remedies the farmer can apply immediately. Be practical and encouraging."""
+    
+    payload = {
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message}
+        ],
+        "temperature": 0.7,
+        "max_tokens": 150
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, params=params, json=payload)
+        response.raise_for_status()
         
-        except Exception as e:
-            raise Exception(f"Treatment Plan Generation Error: {str(e)}")
+        data = response.json()
+        advice = data["choices"][0]["message"]["content"]
+        
+        return advice
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error calling Azure OpenAI API: {str(e)}")
+        raise Exception(f"Diagnosis failed: {str(e)}")
