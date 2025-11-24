@@ -554,57 +554,46 @@ curl https://agrivoice-backend-aefdd2d38be7.herokuapp.com/api/analytics/impact
 
 ## 🛠️ IMPLEMENTATION GUIDES
 
-### For Lewis - Frontend Development Path
+### For Lewis - Frontend Development Path (TODAY)
 
-**Week 1: Setup & Core UI**
+**Morning (2-3 hours):**
 1. Clone repository and set environment variable
-2. Create DiagnosisForm component (use example above)
-3. Test with health check endpoint
-4. Build image upload and form layout
+2. Copy DiagnosisForm component example (provided above)
+3. Test health check endpoint in Swagger UI
+4. Build image upload and form layout in React
 
-**Week 2: Integration & Polish**
+**Afternoon (2-3 hours):**
 1. Integrate API service with form submission
 2. Add loading states and error handling
 3. Display diagnosis results with formatting
 4. Add audio player for response
+5. Test with multiple languages (en, sw, ar)
 
-**Week 3: Testing**
-1. Test with multiple crops and languages
-2. Verify audio playback on different browsers
-3. Test mobile responsiveness
-4. Performance testing with image compression
+**Testing (1-2 hours):**
+1. End-to-end test with real image
+2. Verify audio playback works
+3. Test mobile responsiveness on phone
+4. Deploy to frontend-pwa hosting
 
-**Week 4: Optimization**
-1. Add caching for repeated diagnoses
-2. Implement progressive image upload
-3. Add offline detection
-4. PWA service worker integration
+### For Oram - Dashboard Implementation Path (TODAY)
 
-### For Oram - Dashboard Implementation Path
+**Morning (2-3 hours):**
+1. Verify all 4 analytics endpoints work in Swagger UI
+2. Test /api/analytics/impact endpoint
+3. Create Postman collection from OpenAPI spec
+4. Set up dashboard project structure
 
-**Week 1: Setup & Endpoint Testing**
-1. Verify all 4 analytics endpoints work
-2. Create Postman collection for testing
-3. Set up Power BI / Fabric workspace
-4. Plan dashboard layout
+**Afternoon (2-3 hours):**
+1. Build main summary card (farmers_helped, crop_count)
+2. Build impact metrics display
+3. Create disease hotspots visualization
+4. Add real-time data refresh (30-second interval)
 
-**Week 2: Dashboard Development**
-1. Create main summary card
-2. Build disease heatmap visualization
-3. Create impact metrics display
-4. Add region-based filtering
-
-**Week 3: Copilot Integration**
-1. Import OpenAPI definition to Copilot Studio
-2. Set up custom actions
-3. Test bot responses
-4. Configure conversation flows
-
-**Week 4: Real-Time Features**
-1. Set up auto-refresh (30-second interval)
-2. Add data change notifications
-3. Create alert system for severe cases
-4. Build export/reporting functionality
+**Testing & Integration (1-2 hours):**
+1. Test dashboard with real backend data
+2. Verify Copilot Studio OpenAPI import
+3. Set up Fabric Power BI dashboard (if time)
+4. Deploy dashboard to production
 
 ---
 
@@ -933,21 +922,21 @@ python -m uvicorn app.main:app --reload
 - Analytics system implemented
 - Deployed to production
 
-### Phase 2: 🚀 IN PROGRESS (Frontend + Dashboard)
+### Phase 2: 🚀 TODAY (Frontend + Dashboard) - DEADLINE: End of Day
 - Lewis: Build React UI with diagnosis form
 - Oram: Build analytics dashboard
 - Both: Integrate with production API
-- All: End-to-end testing
+- All: End-to-end testing complete
 
-### Phase 3: 🎯 NEXT (Optimization)
-- Performance tuning
-- Mobile optimization
-- Additional features
-- Production hardening
+### Phase 3: 🎯 READY FOR SUBMISSION
+- Final testing
+- Demo video recording
+- Hackathon submission
 
 ---
 
 **Last Updated:** November 25, 2025  
 **Version:** 1.0.0-COMPLETE  
-**Status:** ✅ 100% Backend Ready - Frontend & Dashboard in Development  
-**Hackathon Status:** Impact Metrics LIVE & Counting 🎉
+**Status:** ✅ 100% Backend Ready - Frontend & Dashboard Due TODAY  
+**Deadline:** End of Day, November 25, 2025 (EOD)
+**Hackathon Status:** Impact Metrics LIVE & Counting 🎉 - Ready for Submission
