@@ -36,10 +36,19 @@ npm-debug.log
 yarn-error.log
 .npm
 
-# Environment variables
+# Environment variables & Secrets
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
+*.env
+!.env.example
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
 
 # IDE
 .vscode/
