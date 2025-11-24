@@ -117,14 +117,15 @@ CORS_ORIGINS=["http://localhost:3000", "http://localhost:5173"]
 - **Backend**: See `backend-ai/README.md`
 - **Frontend**: See `frontend-pwa/README.md`
 - **Copilot**: See `copilot-config/README.md`
-- **Quick Start**: See `QUICKSTART.md`
+- **API Testing**: See `HEROKU_QUICK_START.md` and `HEROKU_DEPLOYMENT.md`
 
-## 🎯 API Endpoints
+## 🎯 Quick API Endpoints
 
-- `POST /api/v1/analyze-image` - Analyze crop image
-- `POST /api/v1/diagnose` - Get AI diagnosis
-- `POST /api/v1/speech-to-text` - Convert voice to text
-- `POST /api/v1/text-to-speech` - Convert text to voice
+- `GET /` - Welcome message
+- `GET /health` - Health check
+- `GET /config` - Azure services status
+- `POST /api/diagnose` - Crop diagnosis (main endpoint)
+- `GET /api/health/diagnosis` - Diagnosis service health
 
 ## 🌍 Supporting African Agriculture
 
@@ -291,9 +292,375 @@ curl -X POST "http://localhost:8000/api/v2/diagnose-enhanced" \
 }
 ```
 
-### Frontend Integration (Oram)
+## 🌐 Production API
 
-Add the following to your React components:
+### Live Backend API
+**🎉 Your backend is now live in production on Heroku!**
+
+```
+Base URL: https://agrivoice-backend-aefdd2d38be7.herokuapp.com/
+```
+
+### API Documentation
+- **Swagger UI (Interactive)**: https://agrivoice-backend-aefdd2d38be7.herokuapp.com/docs
+- **ReDoc (Detailed)**: https://agrivoice-backend-aefdd2d38be7.herokuapp.com/redoc
+
+### Health Check Endpoints
+```bash
+# Check if API is running
+curl https://agrivoice-backend-aefdd2d38be7.herokuapp.com/health
+
+# Check Azure services configuration
+curl https://agrivoice-backend-aefdd2d38be7.herokuapp.com/config
+```
+
+---
+
+## 🚀 Frontend Integration Guide for Oram
+
+### Step 1: Update Environment Variables
+
+Create/update `.env` file in `frontend-pwa`:
+
+```env
+# Development (local backend)
+VITE_API_URL=http://localhost:8000
+
+# Production (live backend)
+VITE_API_URL=https://agrivoice-backend-aefdd2d38be7.herokuapp.com
+```
+
+### Step 2: Create API Service Layer
+
+Update `frontend-pwa/src/services/api.js`:
+
+```javascript
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+export const diagnoseService = {
+  /**
+   * Main diagnosis endpoint
+   * @param {File} imageFile - Crop image file
+   * @param {string} query - Farmer's question
+   * @param {string} language - Language code (en, sw, ar, fr, es, pt)
+   * @returns {Promise<Object>} Diagnosis result
+   */
+  async diagnose(imageFile, query, language = 'en') {
+    const formData = new FormData();
+    formData.append('file', imageFile);
+    formData.append('query', query);
+    formData.append('language', language);
+
+    const response = await fetch(`${API_BASE_URL}/api/diagnose`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Check diagnosis service health
+   */
+  async checkHealth() {
+    const response = await fetch(`${API_BASE_URL}/api/health/diagnosis`);
+    return response.json();
+  }
+};
+
+/**
+ * General API utilities
+ */
+export const apiUtils = {
+  /**
+   * Check if backend is running
+   */
+  async isBackendAlive() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/health`);
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  },
+
+  /**
+   * Check Azure services configuration
+   */
+  async checkConfiguration() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/config`);
+      return response.json();
+    } catch (error) {
+      return null;
+    }
+  },
+
+  /**
+   * Get API base URL (useful for debugging)
+   */
+  getBaseUrl() {
+    return API_BASE_URL;
+  }
+};
+```
+
+### Step 3: Use in React Components
+
+Example `Diagnose.jsx`:
+
+```jsx
+import { diagnoseService, apiUtils } from '../services/api';
+import { useState, useEffect } from 'react';
+
+export default function Diagnose() {
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [backendReady, setBackendReady] = useState(false);
+
+  // Check backend on mount
+  useEffect(() => {
+    const checkBackend = async () => {
+      const isAlive = await apiUtils.isBackendAlive();
+      setBackendReady(isAlive);
+      
+      if (isAlive) {
+        const config = await apiUtils.checkConfiguration();
+        console.log('Azure Services:', config);
+      }
+    };
+    checkBackend();
+  }, []);
+
+  // Handle diagnosis
+  const handleDiagnose = async (imageFile, question, language) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Call production API
+      const diagnosis = await diagnoseService.diagnose(
+        imageFile,
+        question,
+        language
+      );
+
+      setResult(diagnosis);
+    } catch (err) {
+      setError(err.message);
+      console.error('Diagnosis failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!backendReady) {
+    return <div className="error">❌ Backend is not available</div>;
+  }
+
+  return (
+    <div className="diagnose">
+      {loading && <div className="loading">🔄 Analyzing...</div>}
+      
+      {result && (
+        <div className="result">
+          <h2>Diagnosis Result</h2>
+          <div className="tags">
+            {result.data.detected_tags.map(tag => (
+              <span key={tag} className="tag">{tag}</span>
+            ))}
+          </div>
+          <div className="diagnosis">
+            <p><strong>English:</strong> {result.data.diagnosis.original_text}</p>
+            {result.data.diagnosis.language !== 'en' && (
+              <p><strong>{result.data.diagnosis.language.toUpperCase()}:</strong> {result.data.diagnosis.translated_text}</p>
+            )}
+          </div>
+          {result.data.audio?.base64 && (
+            <audio controls src={`data:audio/mp3;base64,${result.data.audio.base64}`} />
+          )}
+        </div>
+      )}
+
+      {error && <div className="error">❌ {error}</div>}
+
+      <button 
+        onClick={() => handleDiagnose(imageFile, question, language)}
+        disabled={loading}
+      >
+        {loading ? 'Diagnosing...' : 'Diagnose Crop'}
+      </button>
+    </div>
+  );
+}
+```
+
+### Step 4: Testing Integration
+
+```bash
+# 1. Start frontend development server
+cd frontend-pwa
+npm run dev
+
+# 2. Open browser to http://localhost:5173
+
+# 3. Frontend will automatically connect to production API:
+# https://agrivoice-backend-aefdd2d38be7.herokuapp.com
+
+# 4. Test by uploading an image in the app
+```
+
+### Step 5: Handle Production vs Development
+
+```javascript
+// In your build/deploy scripts (package.json)
+{
+  "scripts": {
+    "dev": "vite",
+    "build:dev": "vite build --mode development",
+    "build:prod": "vite build --mode production",
+    "preview": "vite preview"
+  }
+}
+
+// Create vite.config.js with environment-based API URL
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  define: {
+    __API_URL__: JSON.stringify(
+      process.env.NODE_ENV === 'production'
+        ? 'https://agrivoice-backend-aefdd2d38be7.herokuapp.com'
+        : 'http://localhost:8000'
+    )
+  }
+})
+```
+
+---
+
+## 🔗 API Endpoints Reference
+
+### Public Endpoints (No Authentication Required)
+
+#### 1. **GET /** - Welcome
+```bash
+curl https://agrivoice-backend-aefdd2d38be7.herokuapp.com/
+
+# Response
+{
+  "service": "AgriVoice Backend",
+  "version": "1.0.0",
+  "message": "Multilingual Crop Doctor for African Farmers",
+  "docs": "/docs"
+}
+```
+
+#### 2. **GET /health** - Health Check
+```bash
+curl https://agrivoice-backend-aefdd2d38be7.herokuapp.com/health
+
+# Response
+{
+  "status": "healthy",
+  "service": "AgriVoice",
+  "version": "1.0.0"
+}
+```
+
+#### 3. **GET /config** - Azure Services Status
+```bash
+curl https://agrivoice-backend-aefdd2d38be7.herokuapp.com/config
+
+# Response
+{
+  "vision": true,
+  "openai": true,
+  "speech": true,
+  "translator": true
+}
+```
+
+#### 4. **POST /api/diagnose** - Crop Diagnosis (Main Endpoint)
+```bash
+curl -X POST https://agrivoice-backend-aefdd2d38be7.herokuapp.com/api/diagnose \
+  -F "file=@crop_image.jpg" \
+  -F "query=My maize has brown spots" \
+  -F "language=en"
+
+# Response
+{
+  "status": "success",
+  "data": {
+    "detected_tags": ["leaf", "brown spots", "maize", "disease"],
+    "diagnosis": {
+      "original_text": "Your maize appears to have...",
+      "translated_text": "Mahindi yako ina...",
+      "language": "sw"
+    },
+    "audio": {
+      "base64": "//NExAAqZANqUAEAJUqqqqq..."
+    }
+  }
+}
+```
+
+#### 5. **GET /api/health/diagnosis** - Diagnosis Service Health
+```bash
+curl https://agrivoice-backend-aefdd2d38be7.herokuapp.com/api/health/diagnosis
+
+# Response
+{
+  "service": "diagnosis",
+  "status": "operational"
+}
+```
+
+---
+
+## 🛠️ Troubleshooting Frontend Integration
+
+### Issue: "Backend not responding"
+```javascript
+// Check if backend is alive before making requests
+const isBackendUp = await apiUtils.isBackendAlive();
+if (!isBackendUp) {
+  showMessage('Backend server is down. Please try again later.');
+}
+```
+
+### Issue: CORS errors
+**Backend already configured for CORS.** If you get CORS errors:
+1. Verify frontend URL in browser
+2. Check browser console for actual error
+3. Ensure you're using `https://` for production API
+
+### Issue: Image upload fails
+```javascript
+// Validate before sending
+if (!imageFile.type.startsWith('image/')) {
+  throw new Error('Please select an image file (JPG/PNG)');
+}
+if (imageFile.size > 4 * 1024 * 1024) {
+  throw new Error('Image must be smaller than 4MB');
+}
+```
+
+### Issue: Slow response times
+- First request may take 5-10 seconds (cold start on Heroku)
+- Subsequent requests are faster
+- Azure services may take time processing
+
+---
+
+## 📱 Frontend Setup (Oram)
 
 ```jsx
 // Step 1: Add crop selector
