@@ -9,6 +9,7 @@ import io
 
 from ..services import vision, gpt4, speech
 from ..services.fabric import log_diagnosis_event
+from ..services.data_logger import log_diagnosis
 
 router = APIRouter(prefix="/api", tags=["diagnosis"])
 
@@ -73,6 +74,7 @@ async def diagnose(
             "translated_text": translated_text
         }
         await log_diagnosis_event(log_data)
+        await log_diagnosis(log_data)  # Also log to persistent data store
         
         # Return response with exact contract
         return {
