@@ -7,8 +7,8 @@ An EcoRevolution Hackathon Project empowering small-scale farmers with AI-driven
 | Name | Role | Focus Areas |
 |------|------|-------------|
 | **Kalanza** | 🧠 Backend AI Lead | Python, FastAPI, Azure Vision/GPT-4, Prompt Engineering |
-| **Oram** | 📱 Frontend Lead | React, PWA, Mobile UI/UX, Camera Logic |
-| **Lewis** | ⚙️ Integration Lead | Copilot Studio, Microsoft Fabric, DevOps |
+| **Lewis** | 📱 Frontend Lead | React, PWA, Mobile UI/UX, Camera Logic |
+| **Oram** | ⚙️ Integration Lead | Copilot Studio, Microsoft Fabric, DevOps |
 
 ## 📖 Project Overview
 
@@ -156,8 +156,8 @@ cd AgriVoice
 # Create git branches for each team
 git checkout -b dev
 git checkout -b feat/backend-api    # Kalanza
-git checkout -b feat/frontend-ui    # Oram
-git checkout -b feat/copilot-integrations  # Lewis
+git checkout -b feat/frontend-ui    # Lewis
+git checkout -b feat/copilot-integrations  # Oram
 ```
 
 ### 2. Backend Setup (Kalanza)
@@ -182,7 +182,7 @@ python -m uvicorn app.main:app --reload
 # API runs at http://localhost:8000
 ```
 
-### 3. Frontend Setup (Oram)
+### 3. Frontend Setup (Lewis)
 
 ```bash
 cd frontend-pwa
@@ -199,7 +199,7 @@ npm run dev
 # App runs at http://localhost:5173
 ```
 
-### 4. Dashboard Setup (Lewis)
+### 4. Dashboard Setup (Oram)
 
 ```bash
 cd dashboard-admin
@@ -316,7 +316,7 @@ curl https://agrivoice-backend-aefdd2d38be7.herokuapp.com/config
 
 ---
 
-## 🚀 Frontend Integration Guide for Oram
+## 🚀 Frontend Integration Guide for Lewis
 
 ### Step 1: Update Environment Variables
 
@@ -660,7 +660,7 @@ if (imageFile.size > 4 * 1024 * 1024) {
 
 ---
 
-## 📱 Frontend Setup (Oram)
+## 📱 Frontend Setup (Lewis)
 
 ```jsx
 // Step 1: Add crop selector
@@ -747,7 +747,7 @@ return (
 );
 ```
 
-### Copilot Bot Integration (Lewis)
+### Copilot Bot Integration (Oram)
 
 For Microsoft Copilot Studio:
 
@@ -800,7 +800,7 @@ ${diagnosis.ongoing_actions.map((a, i) => `${i+1}. ${a}`).join('\n')}
 };
 ```
 
-## 📊 Analytics & Data Logging (Lewis - Fabric Dashboard)
+## 📊 Analytics & Data Logging (Oram - Fabric Dashboard)
 
 The backend automatically logs all diagnoses to create real-time analytics data for your Fabric dashboard:
 
@@ -1032,8 +1032,8 @@ railway up
 
 ### Phase 2: Development (Day 3-10)
 - **Kalanza**: Build FastAPI endpoints + Azure integration
-- **Oram**: Build React UI + Camera/Audio components
-- **Lewis**: Setup Copilot Studio bot + Dashboard
+- **Lewis**: Build React UI + Camera/Audio components
+- **Oram**: Setup Copilot Studio bot + Dashboard
 
 ### Phase 3: Integration & Polish (Day 11-15)
 - Deploy backend to production URL
@@ -1144,8 +1144,8 @@ npm run dev -- --port 5174
 | Role | Person | Focus | Tools |
 |------|--------|-------|-------|
 | AI Backend Lead | Kalanza | Python, FastAPI, Azure SDKs | Python, FastAPI, Azure |
-| Frontend Lead | Oram | React, PWA, Mobile UI | React, Vite, TailwindCSS |
-| DevOps & Integration | Lewis | Copilot Studio, Deployment, Dashboard | Node.js, Copilot Studio, Docker |
+| Frontend Lead | Lewis | React, PWA, Mobile UI | React, Vite, TailwindCSS |
+| DevOps & Integration | Oram | Copilot Studio, Deployment, Dashboard | Node.js, Copilot Studio, Docker |
 
 ## 📄 License
 

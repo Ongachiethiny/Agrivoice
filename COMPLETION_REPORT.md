@@ -5,7 +5,7 @@ Deployment: Heroku (v6) - https://agrivoice-backend-aefdd2d38be7.herokuapp.com
 
 ═══════════════════════════════════════════════════════════════
 
-📱 FOR ORAM (Frontend Team)
+📱 FOR LEWIS (Frontend Team)
 
 Your API is ready! Use this environment variable:
 
@@ -56,7 +56,7 @@ Response Format:
 
 ═══════════════════════════════════════════════════════════════
 
-📊 FOR LEWIS (Integration Lead - Copilot & Fabric)
+📱 FOR ORAM (Integration Lead - Copilot & Fabric)
 
 Your analytics dashboard data is now LIVE! ✨
 
@@ -171,12 +171,12 @@ Git Workflow:
 
 🔗 QUICK LINKS
 
-Frontend Team (Oram):
+Frontend Team (Lewis):
 - Production API: https://agrivoice-backend-aefdd2d38be7.herokuapp.com
 - Swagger UI: https://agrivoice-backend-aefdd2d38be7.herokuapp.com/docs
 - Full Documentation: See README.md "🚀 Frontend Integration Guide"
 
-Integration Lead (Lewis):
+Integration Lead (Oram):
 - Analytics Summary: https://agrivoice-backend-aefdd2d38be7.herokuapp.com/api/analytics/summary
 - Impact Metrics: https://agrivoice-backend-aefdd2d38be7.herokuapp.com/api/analytics/impact
 - OpenAPI Spec: https://agrivoice-backend-aefdd2d38be7.herokuapp.com/openapi.json
@@ -208,8 +208,8 @@ Dashboard Ready: YES
 📝 NEXT STEPS
 
 Immediate (Hackathon Week):
-1. Oram: Build React frontend using provided API service code
-2. Lewis: Build Fabric dashboard consuming /api/analytics endpoints
+1. Lewis: Build React frontend using provided API service code
+2. Oram: Build Fabric dashboard consuming /api/analytics endpoints
 3. All: Test end-to-end with real image uploads
 
 Phase 2 (Post-Hackathon):
