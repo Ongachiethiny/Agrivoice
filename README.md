@@ -800,6 +800,106 @@ ${diagnosis.ongoing_actions.map((a, i) => `${i+1}. ${a}`).join('\n')}
 };
 ```
 
+## 📊 Analytics & Data Logging (Lewis - Fabric Dashboard)
+
+The backend automatically logs all diagnoses to create real-time analytics data for your Fabric dashboard:
+
+### Analytics Endpoints
+
+**1. Summary Statistics**
+```bash
+GET https://agrivoice-backend-aefdd2d38be7.herokuapp.com/api/analytics/summary
+```
+Returns:
+- Total diagnoses performed
+- Top 5 detected diseases
+- Languages supported by farmers
+- Geographic regions where help is provided
+- Average severity level
+- Estimated yield impact
+
+**2. Disease Breakdown**
+```bash
+GET https://agrivoice-backend-aefdd2d38be7.herokuapp.com/api/analytics/diseases
+```
+Returns disease-specific statistics:
+- Number of diagnoses per disease
+- Affected regions for each disease
+- Languages used for each disease
+- Severity distribution
+
+**3. Impact Metrics (Hackathon Scoring)**
+```bash
+GET https://agrivoice-backend-aefdd2d38be7.herokuapp.com/api/analytics/impact
+```
+Returns:
+- **farmers_helped**: Total unique farmers served
+- **unique_crops_diagnosed**: Types of crops identified
+- **disease_hotspot_regions**: Top 5 most affected areas
+- **overall_crisis_severity**: Crisis level (low/moderate/high)
+- **severe_cases_percentage**: % of diagnoses that are severe
+- **estimated_yield_saved**: Economic impact estimate (e.g., "$5,000-$15,000")
+
+**4. Raw Data (Debug)**
+```bash
+GET https://agrivoice-backend-aefdd2d38be7.herokuapp.com/api/analytics/raw
+```
+Returns all logged diagnosis events with timestamps for custom analysis.
+
+### Data Storage
+
+All diagnoses are automatically logged to `backend-ai/data/diagnoses.jsonl` (line-delimited JSON):
+
+```json
+{
+  "timestamp": "2024-11-24T10:30:45.123456",
+  "detected_tags": ["leaf_blight", "fungal_infection"],
+  "query": "What's wrong with my maize?",
+  "language": "sw",
+  "region": "Kenya",
+  "crop_type": "maize",
+  "severity": "severe",
+  "disease_detected": "leaf_blight"
+}
+```
+
+### Fabric Dashboard Integration (Phase 2)
+
+Currently: Console logging + file persistence
+Phase 2: Microsoft Fabric OneLake integration for real-time dashboards
+
+Update `/backend-ai/app/services/fabric.py` to connect to your Fabric workspace:
+```python
+# Phase 2: Replace with real Fabric API call
+async def log_to_fabric(event_data):
+    """Send data to Microsoft Fabric OneLake"""
+    fabric_api = f"https://api.powerbi.com/v1.0/myorg/datasets/{FABRIC_DATASET_ID}/rows"
+    # Implementation coming soon
+```
+
+### Using Analytics Data
+
+**For Dashboard Visualization:**
+```javascript
+// Example: Fetch impact metrics for display
+const getImpactData = async () => {
+  const response = await fetch(
+    'https://agrivoice-backend-aefdd2d38be7.herokuapp.com/api/analytics/impact'
+  );
+  const { data } = await response.json();
+  
+  return {
+    farmersServed: data.farmers_helped,
+    cropTypes: data.unique_crops_diagnosed,
+    topRegions: data.disease_hotspot_regions,
+    estimatedImpact: data.estimated_yield_saved
+  };
+};
+```
+
+**For Power Automate Flows:**
+Use the `/api/analytics/summary` endpoint as a data source for automated reports sent to stakeholders.
+
 ### Supported Crops & Diseases
 
 **10 African Crops:**
