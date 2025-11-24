@@ -1,77 +1,131 @@
 """
-Microsoft Fabric/OneLake Data Logging Service
-Logs diagnosis results for impact dashboard analytics
+Microsoft Fabric Integration Service
+Logs diagnosis events to Microsoft Fabric OneLake for analytics dashboard
 """
-import os
+
 import json
 from datetime import datetime
+from typing import Dict
 import requests
-from azure.identity import DefaultAzureCredential
+from app.config import settings
 
 
-class FabricService:
-    def __init__(self):
-        self.workspace_id = os.getenv("FABRIC_WORKSPACE_ID")
-        self.lakehouse_id = os.getenv("FABRIC_LAKEHOUSE_ID")
-        self.credential = DefaultAzureCredential()
+async def log_diagnosis_event(data: Dict) -> None:
+    """
+    Log a diagnosis event to Microsoft Fabric.
     
-    async def log_diagnosis(self, diagnosis_data: dict, farmer_id: str = None) -> dict:
-        """
-        Log diagnosis result to Microsoft Fabric for analytics.
-        
-        Args:
-            diagnosis_data: Dict containing diagnosis and treatment info
-            farmer_id: Optional farmer identifier
-        
-        Returns:
-            Response from Fabric API
-        """
-        try:
-            # Prepare the record
-            record = {
-                "timestamp": datetime.now().isoformat(),
-                "farmer_id": farmer_id or "anonymous",
-                "disease_name": diagnosis_data.get("disease_name"),
-                "severity": diagnosis_data.get("severity"),
-                "confidence": diagnosis_data.get("confidence"),
-                "region": os.getenv("REGION", "unknown"),
-                "crop_type": diagnosis_data.get("crop_type", "unknown"),
-                "treatment_plan": json.dumps(diagnosis_data.get("organic_solutions", []))
-            }
-            
-            # Log to Fabric (implementation depends on your Fabric setup)
-            # This is a placeholder for the actual Fabric API call
-            result = await self._push_to_fabric(record)
-            
-            return {"status": "logged", "record_id": result.get("id")}
-        
-        except Exception as e:
-            raise Exception(f"Fabric Logging Error: {str(e)}")
+    MVP: Logs to console (JSON format)
+    Production: Send to Fabric OneLake table
     
-    async def _push_to_fabric(self, record: dict) -> dict:
-        """
-        Internal method to push data to Fabric.
-        Implementation depends on your Fabric workspace configuration.
-        """
-        try:
-            # TODO: Implement actual Fabric API call
-            # This is a mock implementation
-            return {"id": f"diagnosis_{datetime.now().timestamp()}"}
-        except Exception as e:
-            raise Exception(f"Failed to push to Fabric: {str(e)}")
+    Args:
+        data: Dictionary containing diagnosis event details
+    """
     
-    async def get_impact_stats(self) -> dict:
-        """
-        Retrieve impact statistics from Fabric for the dashboard.
-        """
-        try:
-            # TODO: Query Fabric for statistics
-            stats = {
-                "total_diagnoses": 0,
-                "by_disease": {},
-                "by_region": {},
-                "success_rate": 0
-            }
-            return stats
-        except Exception as e:
-            raise Exception(f"Failed to retrieve impact stats: {str(e)}")
+    # Create structured log entry
+    log_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "event_type": "diagnosis",
+        "data": data
+    }
+    
+    # PHASE 1 (MVP): Print to console for hackathon demo
+    print("\n" + "="*80)
+    print("📊 DIAGNOSIS EVENT - FABRIC LOG")
+    print("="*80)
+    print(json.dumps(log_entry, indent=2))
+    print("="*80 + "\n")
+    
+    # PHASE 2 (Production): Send to actual Fabric workspace
+    # Uncomment and configure after getting Fabric credentials
+    try:
+        await _ingest_to_fabric_onelake(log_entry)
+    except Exception as e:
+        print(f"Note: Fabric ingestion not configured. Using console logging. Error: {str(e)}")
+
+
+async def _ingest_to_fabric_onelake(log_entry: Dict) -> None:
+    """
+    Internal function to ingest data to Microsoft Fabric OneLake.
+    
+    Configuration needed:
+    1. FABRIC_WORKSPACE_ID - From Azure Portal
+    2. FABRIC_LAKEHOUSE_ID - From Fabric workspace
+    3. FABRIC_TABLE_NAME - Table in lakehouse
+    4. Azure authentication (Managed Identity or Service Principal)
+    
+    This is scaffolding for future implementation.
+    """
+    
+    # Check if Fabric is configured
+    if not all([
+        getattr(settings, 'FABRIC_WORKSPACE_ID', None),
+        getattr(settings, 'FABRIC_LAKEHOUSE_ID', None)
+    ]):
+        # Not configured - skip production ingestion
+        return
+    
+    try:
+        # Example: Fabric REST API endpoint
+        # URL format: https://api.fabric.microsoft.com/v1/workspaces/{workspace_id}/lakehouses/{lakehouse_id}/tables/{table_name}/rows
+        
+        workspace_id = getattr(settings, 'FABRIC_WORKSPACE_ID')
+        lakehouse_id = getattr(settings, 'FABRIC_LAKEHOUSE_ID')
+        table_name = getattr(settings, 'FABRIC_TABLE_NAME', 'diagnoses')
+        
+        # This would be called after authentication is set up
+        # For now, this is a placeholder
+        print(f"[FABRIC] Would ingest to {workspace_id}/{lakehouse_id}/{table_name}")
+        
+    except Exception as e:
+        print(f"Fabric ingestion error: {str(e)}")
+
+
+async def get_impact_stats() -> Dict:
+    """
+    Retrieve impact statistics from Fabric for dashboard.
+    
+    Returns:
+        Dictionary with aggregated statistics
+    """
+    
+    # MVP: Return mock data
+    stats = {
+        "total_diagnoses": 0,
+        "by_disease": {},
+        "by_region": {},
+        "success_rate": 0,
+        "note": "Data will populate from Fabric after real ingestion is configured"
+    }
+    
+    # TODO: Query actual Fabric data once configured
+    # Example query:
+    # SELECT COUNT(*), disease_name, region FROM diagnoses 
+    # WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+    # GROUP BY disease_name, region
+    
+    return stats
+
+
+def _create_fabric_schema() -> Dict:
+    """
+    Define the schema for diagnoses table in Fabric.
+    
+    Use this to create the table in your Fabric lakehouse:
+    """
+    schema = {
+        "table_name": "diagnoses",
+        "columns": [
+            {"name": "id", "type": "string", "nullable": False},
+            {"name": "timestamp", "type": "datetime", "nullable": False},
+            {"name": "user_id", "type": "string", "nullable": True},
+            {"name": "crop_type", "type": "string", "nullable": True},
+            {"name": "region", "type": "string", "nullable": True},
+            {"name": "detected_tags", "type": "string", "nullable": True},  # JSON array as string
+            {"name": "diagnosis_text", "type": "string", "nullable": False},
+            {"name": "language", "type": "string", "nullable": False},
+            {"name": "source", "type": "string", "nullable": False},  # 'web', 'copilot', etc.
+            {"name": "outcome", "type": "string", "nullable": True},  # Future: user feedback
+        ]
+    }
+    return schema
+

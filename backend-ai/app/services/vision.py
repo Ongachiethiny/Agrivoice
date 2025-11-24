@@ -1,59 +1,61 @@
 """
-Azure Computer Vision Service
-Handles image analysis and crop disease detection
+Azure Computer Vision Service Integration
+Analyzes crop images to extract tags and descriptions
 """
-import os
-from typing import List
+
 import requests
-from azure.cognitiveservices.vision.computervision import ComputerVisionClient
-from azure.identity import DefaultAzureCredential
+from typing import List
+from app.config import settings
 
 
-class VisionService:
-    def __init__(self):
-        self.endpoint = os.getenv("AZURE_VISION_ENDPOINT")
-        self.key = os.getenv("AZURE_VISION_KEY")
-        self.client = ComputerVisionClient(
-            endpoint=self.endpoint,
-            credentials=DefaultAzureCredential()
-        )
+async def analyze_image(image_bytes: bytes) -> List[str]:
+    """
+    Analyze an image using Azure Computer Vision.
     
-    async def analyze_image(self, image_path: str) -> dict:
-        """
-        Analyze crop image using Azure Computer Vision.
-        Returns tags and features detected in the image.
-        """
-        try:
-            with open(image_path, "rb") as image_file:
-                results = self.client.analyze_image_in_stream(
-                    image=image_file,
-                    visual_features=["Tags", "Objects", "Description"]
-                )
-            
-            return {
-                "tags": [tag.name for tag in results.tags],
-                "objects": [obj.object_name for obj in results.objects],
-                "description": results.description.captions[0].text if results.description.captions else "",
-                "confidence": results.tags[0].confidence if results.tags else 0
-            }
-        except Exception as e:
-            raise Exception(f"Vision API Error: {str(e)}")
+    Args:
+        image_bytes: Raw image bytes to analyze
     
-    async def analyze_image_url(self, image_url: str) -> dict:
-        """
-        Analyze crop image from URL using Azure Computer Vision.
-        """
-        try:
-            results = self.client.analyze_image(
-                url=image_url,
-                visual_features=["Tags", "Objects", "Description"]
-            )
-            
-            return {
-                "tags": [tag.name for tag in results.tags],
-                "objects": [obj.object_name for obj in results.objects],
-                "description": results.description.captions[0].text if results.description.captions else "",
-                "confidence": results.tags[0].confidence if results.tags else 0
-            }
-        except Exception as e:
-            raise Exception(f"Vision API Error: {str(e)}")
+    Returns:
+        List of detected tags/features from the image
+    """
+    if not settings.AZURE_VISION_KEY or not settings.AZURE_VISION_ENDPOINT:
+        raise ValueError("Azure Vision credentials not configured")
+    
+    # Azure Computer Vision API v3.2
+    url = f"{settings.AZURE_VISION_ENDPOINT}analyze"
+    
+    headers = {
+        "Ocp-Apim-Subscription-Key": settings.AZURE_VISION_KEY,
+        "Content-Type": "application/octet-stream"
+    }
+    
+    params = {
+        "features": "tags,description",
+        "model-version": "latest"
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, params=params, data=image_bytes)
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        # Extract tags from response
+        tags = []
+        
+        # Get tags
+        if "tags" in data:
+            tags.extend([tag["name"] for tag in data["tags"]])
+        
+        # Get description
+        if "description" in data and "captions" in data["description"]:
+            for caption in data["description"]["captions"]:
+                # Add caption text as a tag
+                words = caption["text"].lower().split()
+                tags.extend([w for w in words if len(w) > 2])
+        
+        return list(set(tags))  # Remove duplicates
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error calling Azure Vision API: {str(e)}")
+        raise Exception(f"Vision analysis failed: {str(e)}")

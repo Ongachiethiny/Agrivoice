@@ -211,83 +211,280 @@ npm run dev
 # Dashboard runs at http://localhost:5174
 ```
 
-## 📚 API Documentation
+## 📚 API Documentation & Integration Guide
 
-### Backend Endpoints
+### Enhanced Diagnosis API (v2)
 
-#### 1. **Image Analysis**
-```
-POST /api/v1/analyze-image
-Content-Type: multipart/form-data
+The new enhanced diagnosis endpoint provides **crop-specific recommendations** with **farmer experience adaptation** and **seasonal context awareness**.
 
-Request:
-- file: <image file>
+#### Quick Start Example
 
-Response:
-{
-  "tags": ["leaf", "brown spots", "fungus"],
-  "objects": ["leaf", "stem"],
-  "description": "A maize plant with rust spots",
-  "confidence": 0.95
-}
-```
+```bash
+# Minimal request (30 seconds to response)
+curl -X POST "http://localhost:8000/api/v2/diagnose-enhanced" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image_base64": "iVBORw0KGgo...",
+    "question": "What disease is this?",
+    "language": "en"
+  }'
 
-#### 2. **Diagnosis**
-```
-POST /api/v1/diagnose
-Content-Type: application/json
-
-Request:
-{
-  "image_tags": ["leaf", "brown spots"],
-  "user_question": "Why are my leaves turning brown?",
-  "crop_type": "maize",
-  "region": "East Africa",
-  "farmer_id": "farmer_123"
-}
-
-Response:
-{
-  "disease_name": "Leaf Rust",
-  "severity": "high",
-  "confidence": 0.92,
-  "diagnosis": "Your maize shows signs of rust fungal disease...",
-  "organic_solutions": [
-    "Apply sulfur dust every 7 days",
-    "Remove infected leaves",
-    "Improve crop spacing for ventilation"
-  ],
-  "prevention": ["Rotate crops annually", "Use disease-resistant varieties"],
-  "estimated_recovery_days": 14,
-  "recommended_practices": ["Monitor daily", "Ensure proper drainage"]
-}
+# Full context request (crop-aware with experience adaptation)
+curl -X POST "http://localhost:8000/api/v2/diagnose-enhanced" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image_base64": "iVBORw0KGgo...",
+    "question": "My maize has brown spots",
+    "crop_type": "maize",
+    "farmer_experience": "beginner",
+    "severity_estimate": "moderate",
+    "affected_area": "25%",
+    "current_season": "rainy_season",
+    "language": "en"
+  }'
 ```
 
-#### 3. **Speech-to-Text**
-```
-POST /api/v1/speech-to-text
-Content-Type: multipart/form-data
+#### API Endpoints
 
-Request:
-- file: <audio file>
+**POST /api/v2/diagnose-enhanced** - Enhanced diagnosis with crop context
+- Input: Image, question, crop type, experience level, season
+- Output: Disease name, severity, immediate/ongoing actions, timeline, yield impact
 
-Response:
-{
-  "text": "Why is my maize sick?",
-  "confidence": 0.89
-}
-```
+**GET /api/v2/crops** - List 10 supported African crops
+- Returns: maize, bean, tomato, potato, rice, wheat, cassava, banana, mango, cabbage
 
-#### 4. **Text-to-Speech**
-```
-POST /api/v1/text-to-speech?text=Your crop has rust disease...&save_file=true
+**GET /api/v2/severity-levels** - Severity level descriptions
+- Returns: mild, moderate, severe with descriptions
 
-Response:
+**GET /api/v2/experience-levels** - Farmer experience levels
+- Returns: beginner, intermediate, experienced
+
+#### Response Example
+
+```json
 {
   "status": "success",
-  "file": "/tmp/audio_output.wav"
+  "disease_name": "Gray Leaf Spot (Cercospora zeae-maydis)",
+  "severity": "moderate",
+  "affected_plant_parts": ["leaves"],
+  "confidence_score": 0.85,
+  "immediate_actions": [
+    "Remove affected lower leaves carefully",
+    "Spray neem oil solution every 7-10 days",
+    "Ensure proper spacing between plants"
+  ],
+  "ongoing_actions": [
+    "Monitor daily for new symptoms",
+    "Maintain consistent watering schedule",
+    "Apply copper fungicide if symptoms worsen"
+  ],
+  "prevention_strategies": [
+    "Use resistant varieties next season",
+    "Rotate crops to break disease cycle",
+    "Plant early in season to avoid peak infection"
+  ],
+  "timeline_to_recovery": "2-3 weeks",
+  "yield_impact": "10-20% if untreated",
+  "replanting_needed": false,
+  "diagnosis": "Your maize shows signs of fungal leaf spot...",
+  "tags": ["leaf damage", "brown spots", "fungal"]
 }
 ```
+
+### Frontend Integration (Oram)
+
+Add the following to your React components:
+
+```jsx
+// Step 1: Add crop selector
+<select value={cropType} onChange={(e) => setCropType(e.target.value)}>
+  <option value="">Select crop type</option>
+  <option value="maize">Maize</option>
+  <option value="bean">Bean</option>
+  <option value="tomato">Tomato</option>
+  {/* Get full list from GET /api/v2/crops */}
+</select>
+
+// Step 2: Add experience level selection
+<select value={experience} onChange={(e) => setExperience(e.target.value)}>
+  <option value="beginner">Beginner Farmer</option>
+  <option value="intermediate" selected>Intermediate</option>
+  <option value="experienced">Experienced Farmer</option>
+</select>
+
+// Step 3: Add season selector
+<select value={season} onChange={(e) => setSeason(e.target.value)}>
+  <option value="">-- Choose Season --</option>
+  <option value="rainy_season">Rainy Season</option>
+  <option value="dry_season">Dry Season</option>
+  <option value="planting_season">Planting Season</option>
+</select>
+
+// Step 4: Call API with context
+const response = await fetch('/api/v2/diagnose-enhanced', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    image_base64: imageData,
+    question: userQuestion,
+    crop_type: cropType,
+    farmer_experience: experience,
+    current_season: season,
+    language: 'en'
+  })
+});
+
+// Step 5: Display structured results
+const diagnosis = await response.json();
+
+return (
+  <div>
+    <h2>{diagnosis.disease_name}</h2>
+    
+    <div className="severity">
+      Severity: <strong>{diagnosis.severity}</strong>
+    </div>
+    
+    <section className="immediate">
+      <h3>Do These TODAY:</h3>
+      <ul>
+        {diagnosis.immediate_actions?.map(action => (
+          <li key={action}>{action}</li>
+        ))}
+      </ul>
+    </section>
+    
+    <section className="ongoing">
+      <h3>Next 2-4 Weeks:</h3>
+      <ul>
+        {diagnosis.ongoing_actions?.map(action => (
+          <li key={action}>{action}</li>
+        ))}
+      </ul>
+    </section>
+    
+    <section className="prevention">
+      <h3>Next Season Prevention:</h3>
+      <ul>
+        {diagnosis.prevention_strategies?.map(strategy => (
+          <li key={strategy}>{strategy}</li>
+        ))}
+      </ul>
+    </section>
+    
+    <div className="metrics">
+      <p>Recovery: <strong>{diagnosis.timeline_to_recovery}</strong></p>
+      <p>Yield Impact: <strong>{diagnosis.yield_impact}</strong></p>
+    </div>
+  </div>
+);
+```
+
+### Copilot Bot Integration (Lewis)
+
+For Microsoft Copilot Studio:
+
+```javascript
+// Parse user message to detect crop
+const detectCrop = (message) => {
+  const cropKeywords = {
+    'maize': ['maize', 'corn', 'maize plant'],
+    'bean': ['bean', 'beans', 'legume'],
+    'tomato': ['tomato', 'tomatoes'],
+    'potato': ['potato', 'potatoes'],
+    'rice': ['rice']
+  };
+  
+  for (const [crop, keywords] of Object.entries(cropKeywords)) {
+    if (keywords.some(kw => message.toLowerCase().includes(kw))) {
+      return crop;
+    }
+  }
+  return null;
+};
+
+// Call enhanced diagnosis endpoint
+const callDiagnosis = async (image, question, crop, experience) => {
+  const response = await fetch('/api/v2/diagnose-enhanced', {
+    method: 'POST',
+    body: JSON.stringify({
+      image_base64: image,
+      question: question,
+      crop_type: crop,
+      farmer_experience: experience || 'intermediate',
+      language: 'en'
+    })
+  });
+  return response.json();
+};
+
+// Format bot response
+const formatBotResponse = (diagnosis) => {
+  return `I found **${diagnosis.disease_name}** on your crop 🌾
+
+**URGENT - Do these today:**
+${diagnosis.immediate_actions.map((a, i) => `${i+1}. ${a}`).join('\n')}
+
+**Continue for the next 2-4 weeks:**
+${diagnosis.ongoing_actions.map((a, i) => `${i+1}. ${a}`).join('\n')}
+
+**Recovery timeline:** ${diagnosis.timeline_to_recovery}
+**Expected crop impact:** ${diagnosis.yield_impact}`;
+};
+```
+
+### Supported Crops & Diseases
+
+**10 African Crops:**
+- Maize (corn) - 6 diseases, 4 pests
+- Bean - 4 diseases, 4 pests
+- Tomato - 5 diseases, 4 pests
+- Potato - 3 diseases, 3 pests
+- Rice - Included
+- Wheat - Included
+- Cassava - Included
+- Banana - Included
+- Mango - Included
+- Cabbage - Included
+
+### Experience Level Adaptation
+
+**Beginner Farmer:**
+- Simpler language and step-by-step instructions
+- Fewer actions (1-2 immediate)
+- Focus on affordable solutions
+- Detailed "how-to" for each action
+
+**Intermediate Farmer:**
+- Balanced approach (default)
+- Standard management practices
+- 2-3 immediate actions
+- Mix of organic and practical solutions
+
+**Experienced Farmer:**
+- Advanced technical details
+- Multiple treatment options
+- 2-3 immediate + 3-4 ongoing actions
+- Precision agriculture recommendations
+
+### Seasonal Context
+
+The API adapts recommendations based on season:
+
+**Rainy Season:**
+- Higher fungal disease pressure
+- Focus on moisture management
+- Preventive fungicide recommendations
+
+**Dry Season:**
+- Focus on pest management
+- Water conservation strategies
+- Dormant season practices
+
+**Planting Season:**
+- Early disease prevention
+- Resistant variety recommendations
+- Optimal planting timing
 
 ## 🔐 Environment Variables
 
