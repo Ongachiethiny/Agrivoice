@@ -10,7 +10,14 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: 5174,
+    proxy: {
+      '/api': {
+        target: 'https://agrivoice-backend-aefdd2d38be7.herokuapp.com',
+        changeOrigin: true,
+        rewrite: (path) => path,
+      },
+    },
   },
   build: {
     outDir: 'dist',
