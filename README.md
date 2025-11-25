@@ -117,7 +117,8 @@ CORS_ORIGINS=["http://localhost:3000", "http://localhost:5173"]
 - **Backend**: See `backend-ai/README.md`
 - **Frontend**: See `frontend-pwa/README.md`
 - **Copilot**: See `copilot-config/README.md`
-- **API Testing**: See `HEROKU_QUICK_START.md` and `HEROKU_DEPLOYMENT.md`
+- **API Testing**: See `COMPLETION_REPORT.md`
+- **Deployment Guide**: See `DEPLOYMENT.md`
 
 ## 🎯 Quick API Endpoints
 
@@ -125,7 +126,23 @@ CORS_ORIGINS=["http://localhost:3000", "http://localhost:5173"]
 - `GET /health` - Health check
 - `GET /config` - Azure services status
 - `POST /api/diagnose` - Crop diagnosis (main endpoint)
-- `GET /api/health/diagnosis` - Diagnosis service health
+- `GET /api/analytics/summary` - Analytics summary
+- `GET /api/analytics/diseases` - Disease statistics
+- `GET /api/analytics/impact` - Community impact metrics
+
+## 🚀 Deployment Status
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| **Backend** | ✅ LIVE | https://agrivoice-backend-aefdd2d38be7.herokuapp.com |
+| **Frontend** | ✅ BUILT | Ready for Vercel/Netlify (See DEPLOYMENT.md) |
+| **Dashboard** | ✅ BUILT | Ready for Vercel/Netlify (See DEPLOYMENT.md) |
+
+**To deploy frontend and dashboard:**
+1. Review `DEPLOYMENT.md` for detailed instructions
+2. For quick deployment: Connect repo to Vercel/Netlify
+3. Set environment: `VITE_API_URL=https://agrivoice-backend-aefdd2d38be7.herokuapp.com`
+4. Click deploy!
 
 ## 🌍 Supporting African Agriculture
 
