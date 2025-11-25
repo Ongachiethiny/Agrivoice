@@ -6,7 +6,7 @@ Main entry point for the AI-powered crop diagnosis API
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
-from .routers import diagnosis, copilot, enhanced, analytics
+from .routers import diagnosis, copilot, enhanced, analytics, auth, history
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -60,7 +60,9 @@ async def check_config():
 
 
 # Include routers
+app.include_router(auth.router)
 app.include_router(diagnosis.router)
+app.include_router(history.router)
 app.include_router(copilot.router)
 app.include_router(enhanced.router)
 app.include_router(analytics.router)

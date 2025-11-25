@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
     CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "*")
     
+    # JWT Authentication
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "agrivoice-super-secret-key-change-in-production")
+    JWT_EXPIRATION_HOURS: int = int(os.getenv("JWT_EXPIRATION_HOURS", "24"))
+    JWT_REFRESH_EXPIRATION_DAYS: int = int(os.getenv("JWT_REFRESH_EXPIRATION_DAYS", "7"))
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

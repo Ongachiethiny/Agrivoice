@@ -1,9 +1,27 @@
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { authService } from '@/services/auth'
 
 export default function Layout() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const [user, setUser] = useState(null)
+  const [showMenu, setShowMenu] = useState(false)
+
+  useEffect(() => {
+    // Load user from local storage
+    const storedUser = authService.getUser()
+    setUser(storedUser)
+  }, [])
 
   const isActive = (path) => location.pathname === path ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-600 hover:text-green-600'
+
+  const handleLogout = () => {
+    authService.logout()
+    setUser(null)
+    setShowMenu(false)
+    navigate('/')
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -16,7 +34,7 @@ export default function Layout() {
               <span className="text-2xl font-bold text-green-700">AgriVoice</span>
             </Link>
 
-            <div className="hidden md:flex space-x-8">
+            <div className="hidden md:flex space-x-8 items-center">
               <Link to="/" className={`font-semibold transition ${isActive('/')}`}>
                 Home
               </Link>
@@ -26,16 +44,83 @@ export default function Layout() {
               <Link to="/dashboard" className={`font-semibold transition ${isActive('/dashboard')}`}>
                 📊 Analytics
               </Link>
+              {user && (
+                <Link to="/history" className={`font-semibold transition ${isActive('/history')}`}>
+                  📋 History
+                </Link>
+              )}
+
+              {/* User Menu */}
+              {user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-lg font-semibold hover:bg-green-200 transition"
+                  >
+                    <span>👤</span>
+                    <span className="text-sm">{user.full_name}</span>
+                  </button>
+
+                  {showMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
+                      <Link
+                        to="#profile"
+                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100 border-b"
+                      >
+                        👤 Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 font-semibold"
+                      >
+                        🚪 Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex space-x-2">
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 text-green-600 border-2 border-green-600 rounded-lg font-semibold hover:bg-green-50 transition"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+                  >
+                    Register
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Mobile Menu */}
-            <div className="md:hidden flex space-x-4">
+            <div className="md:hidden flex space-x-4 items-center">
               <Link to="/diagnose" className={`font-semibold text-sm ${isActive('/diagnose')}`}>
                 Diagnose
               </Link>
               <Link to="/dashboard" className={`font-semibold text-sm ${isActive('/dashboard')}`}>
                 Analytics
               </Link>
+              {user && (
+                <Link to="/history" className={`font-semibold text-sm ${isActive('/history')}`}>
+                  History
+                </Link>
+              )}
+              {user ? (
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-red-600 font-semibold"
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link to="/login" className="text-sm text-green-600 font-semibold">
+                  Login
+                </Link>
+              )}
             </div>
           </div>
         </div>
