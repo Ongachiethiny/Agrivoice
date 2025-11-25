@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '@/services/auth'
+import { exportService } from '@/services/export'
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://agrivoice-backend-aefdd2d38be7.herokuapp.com'
 
@@ -11,6 +12,7 @@ export default function History() {
   const [error, setError] = useState(null)
   const [selectedDiagnosis, setSelectedDiagnosis] = useState(null)
   const [stats, setStats] = useState(null)
+  const [exporting, setExporting] = useState(false)
 
   // Check if user is authenticated
   useEffect(() => {
@@ -102,6 +104,32 @@ export default function History() {
     }
   }
 
+  const handleExportDiagnosis = async (diagnosis) => {
+    try {
+      setExporting(true)
+      await exportService.downloadDiagnosisPDF(diagnosis.id)
+      setError(null)
+    } catch (err) {
+      setError(`Failed to export diagnosis: ${err.message}`)
+      console.error('Export error:', err)
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleExportHistory = async () => {
+    try {
+      setExporting(true)
+      await exportService.downloadHistoryPDF()
+      setError(null)
+    } catch (err) {
+      setError(`Failed to export history: ${err.message}`)
+      console.error('Export error:', err)
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const formatDate = (timestamp) => {
     const date = new Date(timestamp)
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -155,6 +183,13 @@ export default function History() {
                   <p className="text-sm text-gray-500">Found {stats.top_diseases[0][1]} times</p>
                 </div>
               )}
+              <button
+                onClick={handleExportHistory}
+                disabled={exporting || history.length === 0}
+                className="w-full mt-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                {exporting ? '⏳ Exporting...' : '📥 Export as PDF'}
+              </button>
             </div>
           </div>
         )}
@@ -196,15 +231,28 @@ export default function History() {
                         🌐 {getLanguageName(diagnosis.language)} | 🏷️ {diagnosis.detected_tags.length} tags
                       </p>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleDelete(diagnosis.id)
-                      }}
-                      className="text-red-600 hover:text-red-800 font-bold"
-                    >
-                      🗑️
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleExportDiagnosis(diagnosis)
+                        }}
+                        disabled={exporting}
+                        className="text-blue-600 hover:text-blue-800 disabled:text-gray-400 font-bold"
+                        title="Export as PDF"
+                      >
+                        📥
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(diagnosis.id)
+                        }}
+                        className="text-red-600 hover:text-red-800 font-bold"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -218,12 +266,21 @@ export default function History() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex justify-between items-start mb-6">
             <h2 className="text-2xl font-bold text-green-700">📖 Diagnosis Detail</h2>
-            <button
-              onClick={() => setSelectedDiagnosis(null)}
-              className="text-gray-600 hover:text-gray-900 text-2xl"
-            >
-              ✕
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleExportDiagnosis(selectedDiagnosis)}
+                disabled={exporting}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition"
+              >
+                {exporting ? '⏳' : '📥'} Export PDF
+              </button>
+              <button
+                onClick={() => setSelectedDiagnosis(null)}
+                className="text-gray-600 hover:text-gray-900 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">

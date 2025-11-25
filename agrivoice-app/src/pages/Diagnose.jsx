@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { apiClient } from '@/services/api'
+import { exportService } from '@/services/export'
 
 export default function Diagnose() {
   const navigate = useNavigate()
@@ -11,6 +12,7 @@ export default function Diagnose() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [diagnosis, setDiagnosis] = useState(null)
+  const [exporting, setExporting] = useState(false)
 
   const handleImageSelected = (file) => {
     setImageFile(file)
@@ -43,6 +45,24 @@ export default function Diagnose() {
       console.error('Diagnosis error:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleExportDiagnosis = async () => {
+    if (!diagnosis?.id) {
+      setError('No diagnosis available to export')
+      return
+    }
+
+    try {
+      setExporting(true)
+      await exportService.downloadDiagnosisPDF(diagnosis.id)
+      setError(null)
+    } catch (err) {
+      setError(`Failed to export diagnosis: ${err.message}`)
+      console.error('Export error:', err)
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -143,7 +163,16 @@ export default function Diagnose() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           {diagnosis ? (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-green-700">🔍 Diagnosis Results</h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-green-700">🔍 Diagnosis Results</h2>
+                <button
+                  onClick={handleExportDiagnosis}
+                  disabled={exporting}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded-lg transition"
+                >
+                  {exporting ? '⏳' : '📥'} Export PDF
+                </button>
+              </div>
 
               {/* Detected Tags */}
               {diagnosis.tags && diagnosis.tags.length > 0 && (
