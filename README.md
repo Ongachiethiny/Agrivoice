@@ -1,53 +1,169 @@
 # 🌾 AgriVoice
 
-**AI-powered crop diagnosis for African farmers**
+**AI-powered crop diagnosis platform for African farmers**
 
-A web application empowering farmers with instant crop disease diagnosis using artificial intelligence. Get personalized recommendations in your local language with audio support.
+![Status](https://img.shields.io/badge/Status-Production%20Ready-green)
+![Build](https://img.shields.io/badge/Build-Passing-brightgreen)
+
+A web application that helps farmers diagnose crop diseases using AI and get instant recommendations in their local language.
+
+---
+
+## 🎯 What It Does
+
+✅ **Upload crop photos** → Get instant AI disease diagnosis  
+✅ **View analytics** → Track disease outbreaks in real-time  
+✅ **Get advice** → Receive treatment recommendations from GPT-4  
+✅ **Hear it** → Listen to guidance in 6 languages  
+✅ **Share data** → Help community with epidemic tracking  
 
 ---
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Node.js 16+
-- Python 3.9+
-- Azure account (Vision, GPT-4, Speech, Translator services)
+### Run Locally
 
-### Frontend (React Web App)
+**Frontend:**
 ```bash
 cd agrivoice-app
-npm install --legacy-peer-deps
+npm install
 npm run dev
 ```
-Opens http://localhost:5173
+→ Open http://localhost:5173
 
-### Backend (FastAPI)
+**Backend:**
 ```bash
 cd backend-ai
 pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
+python -m app.main
 ```
-API at http://localhost:8000/docs
+→ API at http://localhost:8000
 
 ---
 
-## ✨ Features
+## 📁 Project Structure
 
-### 🌾 Crop Diagnosis
-- 📸 Upload crop photos for AI analysis
-- 🔍 Detect diseases using Azure Computer Vision
-- 💡 Get treatment recommendations from GPT-4
-- 🌍 Support for 6 languages (English, Swahili, Arabic, French, Spanish, Portuguese)
-- 🔊 Audio responses in your language
-
-### 📊 Analytics Dashboard
-- Real-time disease statistics
-- Community impact metrics
-- Geographic disease hotspots
-- Severity tracking
-- Auto-refresh every 30 seconds
+```
+AgriVoice/
+├── agrivoice-app/          # React web app
+│   ├── src/pages/          # Home, Diagnose, Dashboard
+│   ├── src/services/       # API client
+│   └── package.json
+├── backend-ai/             # Python FastAPI
+│   ├── app/routers/        # API endpoints
+│   ├── app/services/       # Azure integrations
+│   └── requirements.txt
+└── README.md
+```
 
 ---
+
+## 🌟 Features
+
+| Feature | Details |
+|---------|---------|
+| 🌾 **Diagnosis** | Upload image → Get disease detection & treatment plan |
+| 📊 **Analytics** | Real-time disease statistics & community impact |
+| 🌐 **Languages** | English, Swahili, Arabic, French, Spanish, Portuguese |
+| 🔊 **Audio** | Hear recommendations in your language |
+| 📱 **Responsive** | Works on desktop, tablet, and mobile |
+
+---
+
+## 🔌 API Endpoints
+
+```
+POST   /api/diagnose              → Upload image & get diagnosis
+GET    /api/analytics/summary     → Overall stats
+GET    /api/analytics/diseases    → Disease data
+GET    /api/analytics/impact      → Community metrics
+GET    /health                    → Health check
+```
+
+---
+
+## 📦 Tech Stack
+
+**Frontend:** React, Vite, Tailwind CSS  
+**Backend:** Python, FastAPI, Uvicorn  
+**AI:** Azure Vision, GPT-4, Speech, Translator  
+**Deployment:** Vercel (frontend), Heroku (backend)
+
+---
+
+## 🌍 Deployment
+
+### Frontend → Vercel
+```bash
+cd agrivoice-app
+npm run build
+# Deploy dist/ folder to Vercel
+```
+
+### Backend → Heroku
+```bash
+cd backend-ai
+heroku create your-app
+git push heroku main
+```
+
+**Live:**
+- Backend: https://agrivoice-backend-aefdd2d38be7.herokuapp.com
+- Frontend: [Your Vercel URL]
+
+---
+
+## ⚙️ Environment Variables
+
+**agrivoice-app/.env:**
+```
+VITE_API_URL=https://agrivoice-backend-aefdd2d38be7.herokuapp.com
+```
+
+**backend-ai/.env:**
+```
+AZURE_VISION_KEY=xxx
+AZURE_OPENAI_KEY=xxx
+AZURE_SPEECH_KEY=xxx
+AZURE_TRANSLATOR_KEY=xxx
+```
+
+---
+
+## 🧪 Test It
+
+**Diagnosis:**
+```bash
+curl -X POST http://localhost:8000/api/diagnose \
+  -F "file=@crop.jpg" \
+  -F "query=What's wrong?" \
+  -F "language=en"
+```
+
+**Analytics:**
+```bash
+curl http://localhost:8000/api/analytics/summary
+```
+
+---
+
+## 👥 Team
+
+| Name | Role |
+|------|------|
+| Kalanza | Backend AI |
+| Lewis | Frontend |
+| Oram | Integration |
+
+---
+
+## 📝 License
+
+MIT License - See LICENSE file
+
+---
+
+**Version:** 1.0.0 | **Status:** ✅ Production Ready | **Updated:** Nov 25, 2025
 
 ## 📁 Structure
 
